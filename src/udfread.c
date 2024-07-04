@@ -1784,3 +1784,15 @@ int64_t udfread_file_seek(UDFFILE *p, int64_t pos, int whence)
 
     return -1;
 }
+
+uint32_t udfread_get_partition_start(udfread *udf) {
+    if (udf)
+        return udf->part.p[0].lba;
+    return 0;
+}
+
+const struct file_entry *udfread_get_file_entry(UDFFILE *p) {
+    if (p)
+        return p->fe;
+    return NULL;
+}

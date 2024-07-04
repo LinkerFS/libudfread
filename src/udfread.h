@@ -301,6 +301,20 @@ int64_t udfread_file_tell (UDFFILE *);
  */
 int64_t udfread_file_seek (UDFFILE *, int64_t pos, int whence);
 
+/**
+ * Get partition start block address
+ * @param p  udfread object
+ * @return absolute block address of partition start, 0 on error
+ */
+uint32_t udfread_get_partition_start(udfread *);
+
+/**
+ * Get file entry pointer of a file
+ * @param p  file object
+ * @return file entry pointer, NULL on error
+ */
+const struct file_entry* udfread_get_file_entry(UDFFILE *);
+
 
 #ifdef __cplusplus
 } /* extern "C" */
