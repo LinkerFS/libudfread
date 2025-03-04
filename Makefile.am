@@ -15,7 +15,7 @@ libudfread_la_SOURCES = \
 	src/udfread.c \
 	src/udfread-version.c
 
-libudfread_la_LDFLAGS = -version-info $(UDFREAD_LTVERSION) -export-symbols-regex "(^udfread_.*)"
+libudfread_la_LDFLAGS = -no-undefined -version-info $(UDFREAD_LTVERSION) -export-symbols-regex "(^udfread_.*)"
 
 pkgincludedir = $(includedir)/udfread
 pkginclude_HEADERS = \
