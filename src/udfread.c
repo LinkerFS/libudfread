@@ -23,7 +23,7 @@
 #include "config.h"
 #endif
 
-#include "udfread.h"
+#include "../src/udfread.h"
 
 #ifdef HAVE_UDFREAD_VERSION_H
 #include "udfread-version.h"
@@ -1785,14 +1785,80 @@ int64_t udfread_file_seek(UDFFILE *p, int64_t pos, int whence)
     return -1;
 }
 
-uint32_t udfread_get_partition_start(udfread *udf) {
-    if (udf)
-        return udf->part.p[0].lba;
-    return 0;
+static int64_t _lba_to_offset(const uint32_t lba_part, const uint32_t lba_file) {
+    return (int64_t) (lba_part + lba_file) * UDF_BLOCK_SIZE;
 }
 
-const struct file_entry *udfread_get_file_entry(UDFFILE *p) {
-    if (p)
-        return p->fe;
-    return NULL;
+static uint32_t
+_ad_to_part_info(const struct udf_partitions *partitions, const struct long_ad *ad, const uint32_t num_ad,
+                 struct udf_part_info *info) {
+    uint32_t ad_index;
+    uint64_t sum_length;
+    uint32_t lba_predict;
+    uint32_t lba_start;
+    uint32_t parts;
+
+    uint64_t offset = 0;
+
+    ad_index = 0;
+    sum_length = 0;
+    lba_predict = ad->lba;
+    lba_start = ad->lba;
+    parts = 0;
+    while (ad_index < num_ad) {
+        if (ad->partition != partitions->p[0].number) {
+            udf_error("file partition not equal!\n");
+            return 0;
+        }
+        if (lba_predict != ad->lba) {
+            info->length = sum_length;
+            info->offset = _lba_to_offset(partitions->p[0].lba, lba_start);
+            ++info;
+            ++parts;
+            sum_length = ad->length;
+            lba_start = ad->lba;
+            lba_predict = ad->lba + ad->length / UDF_BLOCK_SIZE;
+        } else {
+            sum_length += ad->length;
+            lba_predict += ad->length / UDF_BLOCK_SIZE;
+        }
+        offset += ad->length;
+        ++ad_index;
+        ++ad;
+    }
+    ++parts;
+    info->length = sum_length;
+    info->offset = _lba_to_offset(partitions->p[0].lba, lba_start);
+    return parts;
+}
+
+UDFFILE_INFO *udfread_get_file_info(UDFFILE *p) {
+    UDFFILE_INFO *file_info;
+
+    if (!p || !p->udf || !p->fe) {
+        return NULL;
+    }
+
+    file_info = NULL;
+
+    if (p->fe->content_inline) {
+        file_info = malloc(sizeof(UDFFILE_INFO) + sizeof(uint8_t) * (p->fe->u.data.information_length - 1));
+        if (!file_info) {
+            udf_error("out of memory!\n");
+            return NULL;
+        }
+        memcpy(file_info->u.data.content, p->fe->u.data.content, p->fe->u.data.information_length);
+        file_info->length = p->fe->u.data.information_length;
+    } else {
+        file_info = malloc(sizeof(UDFFILE_INFO) + sizeof(struct udf_part_info) * (p->fe->u.ads.num_ad - 1));
+        if (!file_info) {
+            udf_error("out of memory!\n");
+            return NULL;
+        }
+        file_info->u.parts.num_parts = _ad_to_part_info(&p->udf->part, p->fe->u.ads.ad, p->fe->u.ads.num_ad,
+                                                        file_info->u.parts.udf_part_info);
+    }
+    file_info->length = p->fe->length;
+    file_info->content_inline = p->fe->content_inline;
+    return file_info;
 }

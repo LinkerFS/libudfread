@@ -308,13 +308,30 @@ int64_t udfread_file_seek (UDFFILE *, int64_t pos, int whence);
  */
 uint32_t udfread_get_partition_start(udfread *);
 
-/**
- * Get file entry pointer of a file
- * @param p  file object
- * @return file entry pointer, NULL on error
- */
-const struct file_entry* udfread_get_file_entry(UDFFILE *);
+typedef struct udfread_file_info {
+    uint64_t length;
+    uint8_t content_inline;
+    union {
+        struct {
+            uint32_t num_parts;
+            struct udf_part_info {
+                int64_t offset;
+                uint64_t length;
+            } udf_part_info[1];
+        } parts;
+        struct {
+            uint32_t information_length;
+            uint8_t content[1];
+        } data;
+    } u;
+} UDFFILE_INFO;
 
+/**
+ * Get file info pointer of a file
+ * @param p  file object
+ * @return file info pointer, NULL on error, should be free after using.
+ */
+UDFFILE_INFO* udfread_get_file_info(UDFFILE *p);
 
 #ifdef __cplusplus
 } /* extern "C" */
