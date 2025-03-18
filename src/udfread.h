@@ -320,8 +320,7 @@ typedef struct udfread_file_info {
             } udf_part_info[1];
         } parts;
         struct {
-            uint32_t information_length;
-            uint8_t content[1];
+            int64_t offset;
         } data;
     } u;
 } UDFFILE_INFO;

@@ -1853,12 +1853,12 @@ UDFFILE_INFO *udfread_get_file_info(UDFFILE *p) {
     file_info = NULL;
 
     if (p->fe->content_inline) {
-        file_info = malloc(sizeof(UDFFILE_INFO) + sizeof(uint8_t) * (p->fe->u.data.information_length - 1));
+        file_info = malloc(sizeof(UDFFILE_INFO));
         if (!file_info) {
             udf_error("out of memory!\n");
             return NULL;
         }
-        memcpy(file_info->u.data.content, p->fe->u.data.content, p->fe->u.data.information_length);
+        file_info->u.data.offset = p->fe->u.data.offset;
         file_info->length = p->fe->u.data.information_length;
     } else {
         file_info = malloc(sizeof(UDFFILE_INFO) + sizeof(struct udf_part_info) * (p->fe->u.ads.num_ad - 1));
