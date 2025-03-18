@@ -244,6 +244,10 @@ enum udf_file_type {
  * read block(s) from absolute lba
  */
 
+static int64_t _lba_to_offset(const uint32_t lba_part, const uint32_t lba_target) {
+    return (int64_t) (lba_part + lba_target) * UDF_BLOCK_SIZE;
+}
+
 static uint32_t _read_blocks(udfread_block_input *input,
                              uint32_t lba, void *buf, uint32_t nblocks,
                              int flags)
@@ -866,9 +870,19 @@ static struct file_entry *_read_file_entry(udfread *udf,
     switch (tag_id) {
         case ECMA_FileEntry:
             fe = decode_file_entry(buf, UDF_BLOCK_SIZE, icb->partition);
+            if (fe->content_inline) {
+                uint32_t l_ea = _get_u32(buf + 168);;
+                uint32_t p_ad = 176 + l_ea;
+                fe->u.data.offset = _lba_to_offset(udf->part.p[icb->partition].lba,icb->lba) +p_ad;
+            }
             break;
         case ECMA_ExtendedFileEntry:
             fe = decode_ext_file_entry(buf, UDF_BLOCK_SIZE, icb->partition);
+            if (fe->content_inline) {
+                uint32_t l_ea = _get_u32(buf + 208);
+                uint32_t p_ad = 216 + l_ea;
+                fe->u.data.offset = _lba_to_offset(udf->part.p[icb->partition].lba,icb->lba) +p_ad;
+            }
             break;
         default:
             udf_error("_read_file_entry: unknown tag %d\n", tag_id);
@@ -1785,9 +1799,6 @@ int64_t udfread_file_seek(UDFFILE *p, int64_t pos, int whence)
     return -1;
 }
 
-static int64_t _lba_to_offset(const uint32_t lba_part, const uint32_t lba_file) {
-    return (int64_t) (lba_part + lba_file) * UDF_BLOCK_SIZE;
-}
 
 static uint32_t
 _ad_to_part_info(const struct udf_partitions *partitions, const struct long_ad *ad, const uint32_t num_ad,
