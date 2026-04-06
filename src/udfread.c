@@ -1809,8 +1809,6 @@ _ad_to_part_info(const struct udf_partitions *partitions, const struct long_ad *
     uint32_t lba_start;
     uint32_t parts;
 
-    uint64_t offset = 0;
-
     ad_index = 0;
     sum_length = 0;
     lba_predict = ad->lba;
@@ -1833,7 +1831,6 @@ _ad_to_part_info(const struct udf_partitions *partitions, const struct long_ad *
             sum_length += ad->length;
             lba_predict += ad->length / UDF_BLOCK_SIZE;
         }
-        offset += ad->length;
         ++ad_index;
         ++ad;
     }
