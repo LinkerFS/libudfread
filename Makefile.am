@@ -17,7 +17,11 @@ libudfread_linkerfs_la_SOURCES = \
 
 libudfread_linkerfs_la_LDFLAGS = -version-info $(UDFREAD_LTVERSION) -export-symbols-regex "(^udfread_.*)"
 
-pkgincludedir = $(includedir)/udfread
+if MINGW
+libudfread_linkerfs_la_LDFLAGS += -no-undefined -avoid-version
+endif
+
+pkgincludedir = $(includedir)/liblinkerfs/udfread
 pkginclude_HEADERS = \
 	src/udfread.h \
 	src/udfread-version.h \

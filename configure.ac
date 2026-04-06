@@ -103,4 +103,8 @@ AC_SUBST(UDFREAD_LTVERSION)
 
 dnl generate output files
 AC_CONFIG_FILES([Makefile src/libudfread-linkerfs.pc src/udfread-version.h])
+
+AM_CONDITIONAL([MINGW],
+  [case "$host_os" in mingw*) true ;; *) false ;; esac])
+
 AC_OUTPUT
